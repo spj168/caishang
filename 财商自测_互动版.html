@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>财商自测</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #0a0a2e, #1a1a4e, #0a0a2e);
+  background-attachment: fixed;
+  color: #fff;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+.screen { display: none; width: 100%; min-height: 100vh; padding: 40px 24px; }
+.screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+#screen-cover { text-align: center; }
+#screen-cover h1 { font-size: 2em; color: #FFD700; margin-bottom: 8px; }
+#screen-cover .sub { color: #aaa; font-size: 1.05em; margin-bottom: 28px; }
+.rules {
+  background: rgba(255,255,255,0.06);
+  border-radius: 14px;
+  padding: 18px 22px;
+  text-align: left;
+  font-size: 0.95em;
+  color: #ccc;
+  line-height: 2;
+  margin-bottom: 32px;
+  width: 100%; max-width: 360px;
+}
+.rules div::before { content: "📌 "; }
+.btn-primary {
+  background: linear-gradient(135deg, #FFD700, #FF8C00);
+  color: #000;
+  border: none;
+  padding: 16px 56px;
+  font-size: 1.2em;
+  font-weight: bold;
+  border-radius: 50px;
+  cursor: pointer;
+  touch-action: manipulation;
+  display: inline-block;
+}
+.ql-top { width: 100%; max-width: 400px; display: flex; justify-content: space-between; margin-bottom: 12px; }
+.ql-progress { font-size: 0.9em; color: #FFD700; }
+.ql-timer { font-size: 1.5em; font-weight: bold; color: #FFD700; min-width: 44px; text-align: center; }
+.ql-timer.warn { color: #FF4500; animation: blink 0.5s infinite; }
+.pbar { width: 100%; max-width: 400px; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-bottom: 28px; overflow: hidden; }
+.pbar-fill { height: 100%; background: linear-gradient(90deg, #FFD700, #FF8C00); border-radius: 3px; transition: width 0.3s; }
+.ql-q { font-size: 1.2em; line-height: 1.7; margin-bottom: 24px; width: 100%; max-width: 400px; }
+.opts { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 400px; }
+.opt {
+  background: rgba(255,255,255,0.07);
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 14px;
+  padding: 15px 18px;
+  color: #fff;
+  font-size: 1em;
+  text-align: left;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 12px;
+  transition: border-color 0.15s, background 0.15s;
+  touch-action: manipulation;
+}
+.opt:hover { border-color: #FFD700; background: rgba(255,215,0,0.08); }
+.opt .lbl {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(255,215,0,0.15);
+  border: 2px solid #FFD700;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: bold; color: #FFD700; font-size: 0.9em; flex-shrink: 0;
+}
+.opt.right { border-color: #00ff88; background: rgba(0,255,136,0.12); }
+.opt.right .lbl { background: #00ff88; border-color: #00ff88; color: #000; }
+.opt.wrong { border-color: #ff4444; background: rgba(255,68,68,0.12); }
+.opt.wrong .lbl { background: #ff4444; border-color: #ff4444; color: #fff; }
+.opt.done { pointer-events: none; opacity: 0.5; }
+.timer-pop {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.75);
+  display: none; align-items: center; justify-content: center;
+  font-size: 2em; color: #FF4500; z-index: 200;
+}
+.timer-pop.show { display: flex; }
+#screen-result { text-align: center; }
+#screen-result .sc {
+  width: 180px; height: 180px; border-radius: 50%;
+  background: conic-gradient(#FFD700 0% var(--p,0%), rgba(255,255,255,0.1) var(--p,0%) 100%);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px; position: relative;
+}
+#screen-result .sc::before {
+  content: ''; position: absolute;
+  width: 140px; height: 140px; border-radius: 50%; background: #0a0a2e;
+}
+#screen-result .sc-text {
+  position: relative; z-index: 1;
+  font-size: 2.4em; font-weight: bold;
+  background: linear-gradient(135deg, #FFD700, #FF8C00);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.msg { font-size: 1.2em; color: #FFD700; margin-bottom: 12px; }
+.detail { font-size: 0.88em; color: #aaa; line-height: 1.9; margin-bottom: 28px; }
+.btn-ghost {
+  background: transparent;
+  border: 2px solid #FFD700;
+  color: #FFD700;
+  padding: 13px 46px;
+  font-size: 1em;
+  border-radius: 50px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+</style>
+</head>
+<body>
+
+<!-- 封面 -->
+<div id="screen-cover" class="screen active">
+  <h1>💰 财商自测</h1>
+  <div class="sub">看看你的财富思维有多强？</div>
+  <div class="rules">
+    <div>共10道题，每题限时30秒</div>
+    <div>点击选项，立即判分并跳转</div>
+    <div>超时未答自动跳过（本题0分）</div>
+    <div>全未答最终得分为0分</div>
+  </div>
+  <button class="btn-primary" id="btnStart">点击这里开始 🚀</button>
+</div>
+
+<!-- 答题 -->
+<div id="screen-quiz" class="screen">
+  <div class="ql-top">
+    <div class="ql-progress" id="prog">第 1 / 10 题</div>
+    <div class="ql-timer" id="timer">30</div>
+  </div>
+  <div class="pbar"><div class="pbar-fill" id="pfill"></div></div>
+  <div class="ql-q" id="qtext"></div>
+  <div class="opts" id="opts"></div>
+</div>
+
+<!-- 结果 -->
+<div id="screen-result" class="screen">
+  <div class="sc"><div class="sc-text" id="scoreNum">0分</div></div>
+  <div class="msg" id="msg"></div>
+  <div class="detail" id="detail"></div>
+  <button class="btn-ghost" id="btnReset">重新测试 🔄</button>
+</div>
+
+<!-- 超时弹窗 -->
+<div class="timer-pop" id="timerPop">⏰ 时间到！</div>
+
+<script>
+var currentQ = 0, score = 0, timeLeft = 30, answered = false, userAnswers = [], timerID = null;
+
+var qdata = [
+  {q:"如果你每月收入5000元，最合理的储蓄比例是？",o:["A. 10%以下，先享受生活","B. 10%-20%，存一点是一点","C. 20%-30%，强制储蓄+合理消费","D. 50%以上，能存多少存多少"],a:2},
+  {q:"看到朋友买股票赚了钱，你会？",o:["A. 马上跟风全仓买入","B. 先了解再小额尝试","C. 不关心，钱放银行最安全","D. 研究基本面后做决定"],a:3},
+  {q:"信用卡的本质是什么？",o:["A. 免费的借钱工具","B. 短期借贷，需按时还款","C. 越多越好，额度代表实力","D. 和借记卡没区别"],a:1},
+  {q:"通货膨胀对你的存款影响是？",o:["A. 没有影响","B. 钱越存越值钱","C. 钱的实际购买力下降","D. 只有大量存款才受影响"],a:2},
+  {q:"以下哪种投资方式风险最低？",o:["A. 股票","B. 国债","C. 期货","D. 加密货币"],a:1},
+  {q:"紧急备用金一般建议预留多少个月的生活费？",o:["A. 1-2个月","B. 3-6个月","C. 12个月以上","D. 不需要备用金"],a:1},
+  {q:"贷款买房时，月供最好不超过月收入的？",o:["A. 10%","B. 30%-40%","C. 60%以上","D. 无所谓，能贷多少贷多少"],a:1},
+  {q:"以下哪种行为最有助于积累财富？",o:["A. 赚多少花多少","B. 只存钱不投资","C. 持续学习+多元配置+长期持有","D. 靠运气赌一把"],a:2},
+  {q:"买保险的主要目的是？",o:["A. 赚钱投资","B. 转移风险，保障底线","C. 避税工具","D. 给销售人员面子"],a:1},
+  {q:"真正的复利指的是？",o:["A. 利滚利，时间越长效果越显著","B. 高风险高回报","C. 只有富人才能用","D. 和单利没有区别"],a:0}
+];
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+}
+
+function startQuiz() {
+  currentQ = 0; score = 0; userAnswers = [];
+  showScreen('screen-quiz');
+  loadQ();
+}
+
+function loadQ() {
+  answered = false; timeLeft = 30;
+  var q = qdata[currentQ];
+  document.getElementById('prog').textContent = '第 ' + (currentQ+1) + ' / ' + qdata.length + ' 题';
+  document.getElementById('pfill').style.width = ((currentQ / qdata.length) * 100) + '%';
+  document.getElementById('qtext').textContent = q.q;
+  document.getElementById('timer').textContent = '30';
+  document.getElementById('timer').className = 'ql-timer';
+  var c = document.getElementById('opts');
+  c.innerHTML = '';
+
+  // 朗读题目
+  speak('第' + (currentQ+1) + '题：' + q.q, 1);
+
+  q.o.forEach(function(opt, i){
+    var b = document.createElement('div');
+    b.className = 'opt';
+    b.setAttribute('data-index', i);
+    b.innerHTML = '<span class="lbl">' + opt[0] + '</span><span>' + opt.substring(2) + '</span>';
+    b.onclick = (function(idx){ return function(){ pick(idx); }; })(i);
+    c.appendChild(b);
+  });
+  startTimer();
+}
+
+function startTimer() {
+  clearInterval(timerID);
+  timeLeft = 30;
+  timerID = setInterval(function(){
+    timeLeft--;
+    var el = document.getElementById('timer');
+    el.textContent = timeLeft;
+    if (timeLeft <= 10) el.className = 'ql-timer warn';
+    if (timeLeft <= 0) {
+      clearInterval(timerID);
+      doTimeout();
+    }
+  }, 1000);
+}
+
+function doTimeout() {
+  if (answered) return;
+  answered = true; userAnswers.push(-1);
+  var btns = document.querySelectorAll('.opt');
+  btns.forEach(function(b){ b.classList.add('done'); });
+  btns[qdata[currentQ].a].classList.add('right');
+  document.getElementById('timerPop').classList.add('show');
+  speak('时间到！', 1.2);
+  setTimeout(function(){
+    document.getElementById('timerPop').classList.remove('show');
+    goNext();
+  }, 1200);
+}
+
+function pick(idx) {
+  if (answered) return;
+  answered = true; clearInterval(timerID);
+  userAnswers.push(idx);
+  var btns = document.querySelectorAll('.opt');
+  btns.forEach(function(b){ b.classList.add('done'); });
+  if (idx === qdata[currentQ].a) {
+    btns[idx].classList.add('right');
+    score += Math.max(0, Math.round((timeLeft / 30) * 10));
+    speak('回答正确！加' + Math.max(0, Math.round((timeLeft / 30) * 10)) + '分', 1.2);
+  } else {
+    btns[idx].classList.add('wrong');
+    btns[qdata[currentQ].a].classList.add('right');
+    speak('回答错误', 1.2);
+  }
+  setTimeout(goNext, 1500);
+}
+
+function goNext() {
+  currentQ++;
+  if (currentQ >= qdata.length) showResult();
+  else loadQ();
+}
+
+function showResult() {
+  showScreen('screen-result');
+  var max = qdata.length * 10;
+  var pct = Math.round((score / max) * 100);
+  var circle = document.querySelector('.sc');
+  circle.style.setProperty('--p', pct + '%');
+  document.getElementById('scoreNum').textContent = score + '分';
+  var msgs = ['😅 您未答题，得分为0分，快来重新测试吧！','💡 财商有待提高，多学习理财知识！','📈 财商及格，还有提升空间哦！','💪 财商优秀！继续学习和实践吧！','🏆 财商大师！你的财富思维非常成熟！'];
+  var mi = pct > 0 ? 1 : 0;
+  if (pct >= 90) mi = 4;
+  else if (pct >= 70) mi = 3;
+  else if (pct >= 50) mi = 2;
+  document.getElementById('msg').textContent = msgs[mi];
+  var ok = 0; var un = 0;
+  for (var i = 0; i < userAnswers.length; i++) {
+    if (userAnswers[i] === qdata[i].a) ok++;
+    if (userAnswers[i] === -1) un++;
+  }
+  document.getElementById('detail').innerText = '答对 ' + ok + ' 题 / 共 ' + qdata.length + ' 题\n未答 ' + un + ' 题\n\n正确答案已在高亮中展示，欢迎重新测试！';
+
+  // 朗读结果
+  setTimeout(function(){
+    speak('测试完成！您的得分是' + score + '分。' + msgs[mi], 1);
+  }, 500);
+}
+
+function resetQuiz() {
+  showScreen('screen-cover');
+}
+
+// 语音功能
+var voices = [];
+function loadVoices() {
+  voices = window.speechSynthesis.getVoices();
+}
+loadVoices();
+window.speechSynthesis.onvoiceschanged = loadVoices;
+
+function speak(text, rate) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  var utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'zh-CN';
+  utter.rate = rate || 1;
+  var zhVoice = voices.find(function(v){ return v.lang.indexOf('zh') !== -1; });
+  if (zhVoice) utter.voice = zhVoice;
+  window.speechSynthesis.speak(utter);
+}
+
+// 直接绑定事件，不用DOMContentLoaded
+var btnStart = document.getElementById('btnStart');
+var btnReset = document.getElementById('btnReset');
+if (btnStart) btnStart.onclick = function(){
+  speak('开始财商测试，共10道题，每题30秒，准备好了吗？', 1.2);
+  startQuiz();
+};
+if (btnReset) btnReset.onclick = resetQuiz;
+</script>
+</body>
+</html>
